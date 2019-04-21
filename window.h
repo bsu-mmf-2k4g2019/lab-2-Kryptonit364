@@ -22,7 +22,6 @@ private slots:
     void rotationTextChanger();
 
 private:
-    QSlider *createSlider();
     GLWidget *glWidget;
     QPushButton *rotationChanger;
 };

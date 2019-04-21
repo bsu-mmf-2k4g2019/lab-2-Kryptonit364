@@ -57,13 +57,3 @@ void Window::rotationTextChanger() {
         rotationChanger->setText("Автоматическое вращение");
     }
 }
-QSlider *Window::createSlider()
-{
-    QSlider *slider = new QSlider(Qt::Vertical);
-    slider->setRange(0, 360 * 16);
-    slider->setSingleStep(16);
-    slider->setPageStep(15 * 16);
-    slider->setTickInterval(15 * 16);
-    slider->setTickPosition(QSlider::TicksRight);
-    return slider;
-}

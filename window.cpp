@@ -33,13 +33,13 @@ Window::Window(QWidget *parent) : QWidget(parent)
     setLayout(mainLayout);
 
     setWindowTitle("3D ObJects");
-    /*QMessageBox::information(nullptr, "Небольшой гайд",
+    QMessageBox::information(nullptr, "Небольшой гайд",
                              "<html><h2>Внимание! </h2>\n"
                              "<html><u>WASD</u> - для перемещения камеры в плоскости параллельной объектам.<br>"
                              "<html><u>Mouse scroll</u> - для перемещения камеры от / к пользователю.<br><br>"
                              "<html><u>ПКМ / ЛКМ</u> - для вращения объектов в ручном режиме.<br><br>"
                              "Для переключения режима вращения используйте <html><u>кнопку</u> под GLWidget'ом.<br>"
-                             "<html><u>Esc</u> - для выхода из программы.");*/
+                             "<html><u>Esc</u> - для выхода из программы.");
 }
 
 void Window::keyPressEvent(QKeyEvent *event)

@@ -50,18 +50,20 @@ private:
 
     // Shader programms
     QOpenGLShaderProgram m_prog_container;
-    QOpenGLShaderProgram m_prog_pyramid;
+    QOpenGLShaderProgram m_prog_pyramid4;
+    QOpenGLShaderProgram m_prog_pyramid3;
 
     // VAOs
     GLuint m_vao_container_id;
-    GLuint m_vao_pyramid_id;
+    GLuint m_vao_pyramid4_id;
     GLuint m_vao_tower_id;
+    GLuint m_vao_pyramid3_id;
 
     // Textures
     GLuint m_texture_cube_id;
     GLuint m_texture_triangle_id;
-    GLuint m_texture_grass_id;
-    GLuint m_texture_dirt_id;
+    GLuint m_texture_wall_id;
+    GLuint m_texture_triangle2_id;
 
     // Uniforms
     //GLint  m_triangle_color_id;

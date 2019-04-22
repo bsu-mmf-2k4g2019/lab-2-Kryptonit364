@@ -2,7 +2,7 @@
     <qresource prefix="/img">
         <file>triangle.jpg</file>
         <file>cube.jpg</file>
-        <file>grass.jpg</file>
-        <file>dirt.jpg</file>
+        <file>tower_wall.jpg</file>
+        <file>triangle2.jpg</file>
     </qresource>
 </RCC>

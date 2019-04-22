@@ -36,9 +36,9 @@ Window::Window(QWidget *parent) : QWidget(parent)
     QMessageBox::information(nullptr, "Небольшой гайд",
                              "<html><h2>Внимание! </h2>\n"
                              "<html><u>WASD</u> - для перемещения камеры в плоскости параллельной объектам.<br>"
-                             "<html><u>Mouse scroll</u> - для перемещения камеры от / к пользователю.<br><br>"
-                             "<html><u>ПКМ / ЛКМ</u> - для вращения объектов в ручном режиме.<br><br>"
-                             "Для переключения режима вращения используйте <html><u>кнопку</u> под GLWidget'ом.<br>"
+                             "<html><u>Mouse scroll</u> - для перемещения камеры от / к пользователю.<br>"
+                             "<html><u>ПКМ / ЛКМ</u> - для вращения объектов в ручном режиме.<br>"
+                             "<html><u>Space</u> - для переключения режима вращения.<br><br>"
                              "<html><u>Esc</u> - для выхода из программы.");
 }
 
@@ -46,8 +46,9 @@ void Window::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Escape)
         close();
-    else
-        glWidget->keyPressEvent(event);
+    if (event->key() == Qt::Key_Space)
+        rotationChanger->click();
+    glWidget->keyPressEvent(event);
 }
 void Window::rotationTextChanger() {
     if (glWidget->autoRotate) {

@@ -51,7 +51,6 @@ private:
     // Shader programms
     QOpenGLShaderProgram m_prog_container;
     QOpenGLShaderProgram m_prog_pyramid;
-    QOpenGLShaderProgram m_prog_tower;
 
     // VAOs
     GLuint m_vao_container_id;
@@ -62,6 +61,7 @@ private:
     GLuint m_texture_cube_id;
     GLuint m_texture_triangle_id;
     GLuint m_texture_grass_id;
+    GLuint m_texture_dirt_id;
 
     // Uniforms
     //GLint  m_triangle_color_id;

@@ -431,19 +431,12 @@ void GLWidget::resizeGL(int w, int h)
 
 void GLWidget::noTime(int &t_x, int &t_y, int &t_z){
     QTime cur_t = QTime::currentTime();
-    int r, temp = (int) ((cur_t.second() * 1000 + cur_t.msec()));
-    if (temp < 4000)
-        r = (int) (0.04 * temp);
-    else
-        if (temp >= 4000 && temp < 17000)
-            r = (int) (0.006 * temp);
-        else
-            if (temp >= 17000 && temp < 26500)
-                r = (int) (0.003 * temp);
-            else
-                r = (int) (0.001 * temp);
+    int temp = (int) ((cur_t.second() * 1000 + cur_t.msec()));
+    while (temp > 1000)
+        temp *= 0.5;
+    temp *= 0.04;
     //std::cout << cur_t.second() << " : " << cur_t.msec() << " - " << temp << "\n";
-    t_x += r; t_y += r; t_z += r;
+    t_x += temp; t_y += temp; t_z += temp;
 }
 void GLWidget::paintGL()
 {

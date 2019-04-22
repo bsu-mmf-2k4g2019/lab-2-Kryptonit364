@@ -2,7 +2,7 @@
 
 #include <QImage>
 #include <QTime>
-#include <iostream>
+//#include <iostream>
 
 static const char *vertexShaderSource_container =
     "#version 330 core\n"
@@ -21,15 +21,53 @@ static const char *vertexShaderSource_container =
     "    TexCoord = aTex;\n"
     "}\n\0";
 
+static const char *vertexShaderSource_pyramid =
+    "#version 330 core\n"
+    "layout (location = 0) in vec3 aPos;\n"
+    "layout (location = 1) in vec3 aCol;\n"
+    "layout (location = 2) in vec2 aTex;\n"
+    "layout (location = 3) in float tType;\n"
+    "out vec3 ourColor;\n"
+    "out vec2 TexCoord;\n"
+    "out float TexType;\n"
+    "uniform mat4 model;\n"
+    "uniform mat4 view;\n"
+    "uniform mat4 projection;\n"
+    "void main()\n"
+    "{\n"
+    "    gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
+    "    ourColor = aCol;\n"
+    "    TexCoord = aTex;\n"
+    "    TexType = tType;\n"
+    "}\n\0";
+
 static const char *fragmentShaderSource_container =
     "#version 330 core\n"
     "in vec3 ourColor;\n"
     "in vec2 TexCoord;\n"
     "out vec4 FragColor;\n"
-    "uniform sampler2D ourBg;\n"
+    "uniform sampler2D mTexture;\n"
     "void main()\n"
     "{\n"
-    "    FragColor = texture(ourBg, TexCoord) * vec4(ourColor, 1.0);\n"
+    "    FragColor = mix(texture(mTexture, TexCoord), vec4(ourColor, 1.0), 0.35);\n"
+    "}\n\0";
+
+static const char *fragmentShaderSource_pyramid =
+    "#version 330 core\n"
+    "in vec3 ourColor;\n"
+    "in vec2 TexCoord;\n"
+    "in float TexType;\n"
+    "out vec4 FragColor;\n"
+    "uniform sampler2D mTexture_c;\n"
+    "uniform sampler2D mTexture_t;\n"
+    "void main()\n"
+    "{\n"
+    "   if (TexType == 1.0f)\n"
+    "       FragColor = texture(mTexture_c, TexCoord);\n"
+    "   else\n"
+    "       if (TexType == 0.0f)\n"
+    "           FragColor = texture(mTexture_t, TexCoord);\n"
+    //"       else FragColor = vec4(ourColor, 1.0);\n"
     "}\n\0";
 
 static const char *fragmentShaderSource_tower =
@@ -37,10 +75,10 @@ static const char *fragmentShaderSource_tower =
     "in vec3 ourColor;\n"
     "in vec2 TexCoord;\n"
     "out vec4 FragColor;\n"
-    "uniform sampler2D ourBg;\n"
+    "uniform sampler2D mTexture;\n"
     "void main()\n"
     "{\n"
-    "    FragColor = texture(ourBg, TexCoord) * vec4(ourColor, 1.0);\n"
+    "    FragColor = texture(mTexture, TexCoord);\n"
     "}\n\0";
 
 static QVector3D cubePositions[] = {
@@ -161,27 +199,27 @@ void GLWidget::initializeGL()
 
     // Create VAO & VBO, bind it to current GL_ARRAY_BUFFER and load vertices into it
     GLfloat vertices_pyramid[] = {
-        // positions          // colors           // texture coords
-        0.5f, -0.5f, 0.5f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f,   // top right
-        0.5f, -0.5f,-0.5f,   0.0f, 1.0f, 1.0f,   1.0f, 0.0f,   // bottom right
-       -0.5f, -0.5f,-0.5f,   1.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-       -0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f,   // top left
+        // positions          // colors           // texture coords & texture type (1 - cube, 0 - triangle)
+        0.5f, -0.5f, 0.5f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f,    1.0f,   // top right
+        0.5f, -0.5f,-0.5f,   0.0f, 1.0f, 1.0f,   1.0f, 0.0f,    1.0f,   // bottom right
+       -0.5f, -0.5f,-0.5f,   1.0f, 0.0f, 1.0f,   0.0f, 0.0f,    1.0f,   // bottom left
+       -0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f,    1.0f,   // top left
 
-        0.5f, -0.5f, 0.5f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f, //1-2
-        0.5f, -0.5f,-0.5f,   0.0f, 1.0f, 1.0f,   1.0f, 0.0f,
-        0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+        0.5f, -0.5f, 0.5f,   0.0f, 1.0f, 0.0f,   0.0f, 0.0f,    0.0f,   //1-2
+        0.5f, -0.5f,-0.5f,   0.0f, 1.0f, 1.0f,   1.0f, 0.0f,    0.0f,
+        0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 1.0f,   0.5f, 1.0f,    0.0f,
 
-        0.5f, -0.5f,-0.5f,   0.0f, 1.0f, 1.0f,   1.0f, 0.0f, //2-3
-       -0.5f, -0.5f,-0.5f,   1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
-        0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 1.0f,   0.0f, 1.0f,
+        0.5f, -0.5f,-0.5f,   0.0f, 1.0f, 1.0f,   0.0f, 0.0f,    0.0f,   //2-3
+       -0.5f, -0.5f,-0.5f,   1.0f, 0.0f, 1.0f,   1.0f, 0.0f,    0.0f,
+        0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 1.0f,   0.5f, 1.0f,    0.0f,
 
-       -0.5f, -0.5f,-0.5f,   1.0f, 0.0f, 1.0f,   0.0f, 0.0f, //3-4
-       -0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f,
-        0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 1.0f,   1.0f, 1.0f,
+       -0.5f, -0.5f,-0.5f,   1.0f, 0.0f, 1.0f,   0.0f, 0.0f,    0.0f,   //3-4
+       -0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f,    0.0f,
+        0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 1.0f,   0.5f, 1.0f,    0.0f,
 
-       -0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f, //4-1
-        0.5f, -0.5f, 0.5f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
-        0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+       -0.5f, -0.5f, 0.5f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,    0.0f,   //4-1
+        0.5f, -0.5f, 0.5f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,    0.0f,
+        0.0f,  0.5f, 0.0f,   1.0f, 0.0f, 1.0f,   0.5f, 1.0f,    0.0f,
     };
     GLuint indices_pyramid[] = {
         0, 1, 2,
@@ -250,23 +288,23 @@ void GLWidget::initializeGL()
         -0.5f, -1.0f,-0.5f,   0.0f, 1.0f, 1.0f,   1.0f, 0.0f,
         -0.5f, -1.0f, 0.5f,   1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
 
-         0.5f, 1.0f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f, //Верхнее основание
-        -0.5f, 1.0f,-0.5f,   0.0f, 1.0f, 1.0f,   1.0f, 0.0f,
-        -0.5f, 1.0f, 0.5f,   1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+         0.5f, 1.0f, 0.0f,    0.0f, 1.0f, 0.0f,   1.0f, 1.0f, //Верхнее основание
+        -0.5f, 1.0f,-0.5f,    0.0f, 1.0f, 1.0f,   1.0f, 0.0f,
+        -0.5f, 1.0f, 0.5f,    1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
 
-         0.5f, -1.0f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f, //1-2
-        -0.5f, -1.0f,-0.5f,   0.0f, 1.0f, 1.0f,   1.0f, 0.0f,
-        -0.5f, 1.0f,-0.5f,   0.0f, 1.0f, 1.0f,   1.0f, 0.0f,
-         0.5f, 1.0f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
+         0.5f, -1.0f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, //1-2
+        -0.5f, -1.0f,-0.5f,   0.0f, 1.0f, 1.0f,   0.0f, 0.0f,
+        -0.5f, 1.0f,-0.5f,    0.0f, 1.0f, 1.0f,   0.0f, 1.0f,
+         0.5f, 1.0f, 0.0f,    0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
 
         -0.5f, -1.0f,-0.5f,   0.0f, 1.0f, 1.0f,   1.0f, 0.0f, //2-3
         -0.5f, -1.0f, 0.5f,   1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
-        -0.5f, 1.0f, 0.5f,   1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
-        -0.5f, 1.0f,-0.5f,   0.0f, 1.0f, 1.0f,   1.0f, 0.0f,
+        -0.5f, 1.0f, 0.5f,    1.0f, 0.0f, 1.0f,   0.0f, 1.0f,
+        -0.5f, 1.0f,-0.5f,    0.0f, 1.0f, 1.0f,   1.0f, 1.0f,
 
-         0.5f, 1.0f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f, //1-3
-        -0.5f, 1.0f, 0.5f,   1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
-        -0.5f, -1.0f, 0.5f,   1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+         0.5f, 1.0f, 0.0f,    0.0f, 1.0f, 0.0f,   1.0f, 0.0f, //1-3
+        -0.5f, 1.0f, 0.5f,    1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+        -0.5f, -1.0f, 0.5f,   1.0f, 0.0f, 1.0f,   0.0f, 1.0f,
          0.5f, -1.0f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
     };
     GLuint indices_tower[] = {
@@ -324,12 +362,14 @@ void GLWidget::initializeGL()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices_pyramid), indices_pyramid, GL_STATIC_DRAW);
     // Configure how OpenGL will interpret the VBO data
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)nullptr);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)nullptr);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
+    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(8 * sizeof(float)));
+    glEnableVertexAttribArray(3);
     glBindVertexArray(0); // Unbind VAO
     glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind current VBO
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // Unbind current EBO
@@ -356,23 +396,39 @@ void GLWidget::initializeGL()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // Unbind current EBO
 
     // Prepare textures
-    QImage bg(":/img/container.jpg");
-    bg = bg.convertToFormat(QImage::Format_RGB888);
+    QImage cube(":/img/cube.jpg");
+    cube = cube.convertToFormat(QImage::Format_RGB888);
+    glGenTextures(1, &m_texture_cube_id);
+    glBindTexture(GL_TEXTURE_2D, m_texture_cube_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cube.width(), cube.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, cube.bits());
+    glGenerateMipmap(GL_TEXTURE_2D);
 
-    glGenTextures(1, &m_texture_bg_id);
-    glBindTexture(GL_TEXTURE_2D, m_texture_bg_id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, bg.width(), bg.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, bg.bits());
+    QImage triangle(":/img/triangle.jpg");
+    triangle = triangle.convertToFormat(QImage::Format_RGB888).mirrored(false, true);
+    glGenTextures(1, &m_texture_triangle_id);
+    glBindTexture(GL_TEXTURE_2D, m_texture_triangle_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, triangle.width(), triangle.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, triangle.bits());
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    QImage grass(":/img/grass.jpg");
+    grass = grass.convertToFormat(QImage::Format_RGB888);
+    glGenTextures(1, &m_texture_grass_id);
+    glBindTexture(GL_TEXTURE_2D, m_texture_grass_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, grass.width(), grass.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, grass.bits());
     glGenerateMipmap(GL_TEXTURE_2D);
 
     // Prepare shader programms
     m_prog_container.addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShaderSource_container);
     m_prog_container.addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource_container);
+    m_prog_container.link();
+
+    m_prog_pyramid.addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShaderSource_pyramid);
+    m_prog_pyramid.addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource_pyramid);
+    m_prog_pyramid.link();
+
     m_prog_tower.addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShaderSource_container);
     m_prog_tower.addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource_tower);
-    m_prog_container.link();
     m_prog_tower.link();
-    // Obtain uniform ids
-    //m_triangle_color_id = m_prog_triangle.uniformLocation("color");
 }
 void GLWidget::resizeGL(int w, int h)
 {
@@ -392,7 +448,7 @@ void GLWidget::noTime(int &t_x, int &t_y, int &t_z){
                 r = (int) (0.003 * temp);
             else
                 r = (int) (0.001 * temp);
-    std::cout << cur_t.second() << " : " << cur_t.msec() << " - " << temp << "\n";
+    //std::cout << cur_t.second() << " : " << cur_t.msec() << " - " << temp << "\n";
     t_x += r; t_y += r; t_z += r;
 }
 void GLWidget::paintGL()
@@ -403,7 +459,13 @@ void GLWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_texture_bg_id);
+    glBindTexture(GL_TEXTURE_2D, m_texture_cube_id);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_texture_triangle_id);
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, m_texture_grass_id);
 
     QMatrix4x4 model;
     QMatrix4x4 view;
@@ -414,7 +476,7 @@ void GLWidget::paintGL()
 
     glBindVertexArray(m_vao_container_id);
     m_prog_container.bind();
-    m_prog_container.setUniformValue("ourBg", 0);
+    m_prog_container.setUniformValue("mTexture", 0);
     m_prog_container.setUniformValue("view", view);
     m_prog_container.setUniformValue("projection", projection);
     for (size_t i = 0; i < 6; i++) {
@@ -436,30 +498,9 @@ void GLWidget::paintGL()
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
     }
 
-    glBindVertexArray(m_vao_pyramid_id);
-
-    for (size_t i = 0; i < 2; i++) {
-        model.setToIdentity();
-        model.translate(pyramidPositions[i]);
-        if (autoRotate){
-            model.rotate(180.0f - (t_x / 16.0f), 1.0f, 0.0f, 0.0f);
-            model.rotate(t_y / 16.0f, 0.0f, 1.0f, 0.0f);
-            model.rotate(t_z / 16.0f, 0.0f, 0.0f, 1.0f);
-            m_xRot = t_x; m_yRot = t_y; m_zRot = t_z;
-        }
-        else {
-            model.rotate(180.0f - (m_xRot / 16.0f), 1.0f, 0.0f, 0.0f);
-            model.rotate(m_yRot / 16.0f, 0.0f, 1.0f, 0.0f);
-            model.rotate(m_zRot / 16.0f, 0.0f, 0.0f, 1.0f);
-            t_x = m_xRot; t_y = m_yRot; t_z = m_zRot;
-        }
-        m_prog_container.setUniformValue("model", model);
-        glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, nullptr);
-    }
-
     glBindVertexArray(m_vao_tower_id);
     m_prog_tower.bind();
-    m_prog_tower.setUniformValue("ourBg", 0);
+    m_prog_tower.setUniformValue("mTexture", 2);
     m_prog_tower.setUniformValue("view", view);
     m_prog_tower.setUniformValue("projection", projection);
     for (size_t i = 0; i < 2; i++) {
@@ -477,8 +518,33 @@ void GLWidget::paintGL()
             model.rotate(m_zRot / 16.0f, 0.0f, 0.0f, 1.0f);
             t_x = m_xRot; t_y = m_yRot; t_z = m_zRot;
         }
-        m_prog_container.setUniformValue("model", model);
+        m_prog_tower.setUniformValue("model", model);
         glDrawElements(GL_TRIANGLES, 30, GL_UNSIGNED_INT, nullptr);
+    }
+
+    glBindVertexArray(m_vao_pyramid_id);
+    m_prog_pyramid.bind();
+    m_prog_pyramid.setUniformValue("mTexture_c", 0);
+    m_prog_pyramid.setUniformValue("mTexture_t", 1);
+    m_prog_pyramid.setUniformValue("view", view);
+    m_prog_pyramid.setUniformValue("projection", projection);
+    for (size_t i = 0; i < 2; i++) {
+        model.setToIdentity();
+        model.translate(pyramidPositions[i]);
+        if (autoRotate){
+            model.rotate(180.0f - (t_x / 16.0f), 1.0f, 0.0f, 0.0f);
+            model.rotate(t_y / 16.0f, 0.0f, 1.0f, 0.0f);
+            model.rotate(t_z / 16.0f, 0.0f, 0.0f, 1.0f);
+            m_xRot = t_x; m_yRot = t_y; m_zRot = t_z;
+        }
+        else {
+            model.rotate(180.0f - (m_xRot / 16.0f), 1.0f, 0.0f, 0.0f);
+            model.rotate(m_yRot / 16.0f, 0.0f, 1.0f, 0.0f);
+            model.rotate(m_zRot / 16.0f, 0.0f, 0.0f, 1.0f);
+            t_x = m_xRot; t_y = m_yRot; t_z = m_zRot;
+        }
+        m_prog_pyramid.setUniformValue("model", model);
+        glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, nullptr);
     }
 }
 

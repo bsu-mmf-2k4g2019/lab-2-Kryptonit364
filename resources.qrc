@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/img">
-        <file>container.jpg</file>
+        <file>triangle.jpg</file>
+        <file>cube.jpg</file>
+        <file>grass.jpg</file>
     </qresource>
 </RCC>
